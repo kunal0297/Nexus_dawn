@@ -55,6 +55,174 @@ cp .env.example .env
 npm start
 ```
 
+## 📚 Implementation Guide
+
+### 🛠️ 1. Project Setup
+
+**Initialize with Vite:**
+```bash
+npm create vite@latest nexus-dawn --template react-ts
+cd nexus-dawn
+npm install
+```
+
+**Install Tailwind CSS:**
+```bash
+npm install -D tailwindcss postcss autoprefixer
+npx tailwindcss init -p
+```
+
+**Configure `tailwind.config.js`:**
+```javascript
+module.exports = {
+  content: ["./src/**/*.{js,ts,jsx,tsx}"],
+  theme: {
+    extend: {},
+  },
+  plugins: [],
+};
+```
+
+### 🎭 2. Oracle Chat with LiveKit
+
+**Install LiveKit:**
+```bash
+npm install @livekit/components-react @livekit/components-styles livekit-client
+```
+
+**Basic Implementation:**
+```tsx
+import { LiveKitRoom } from '@livekit/components-react';
+import '@livekit/components-styles';
+
+function OracleChat() {
+  return (
+    <LiveKitRoom
+      token="<your_livekit_token>"
+      serverUrl="<your_livekit_server_url>"
+      connect={true}
+    >
+      {/* Chat UI components */}
+    </LiveKitRoom>
+  );
+}
+```
+
+### 🧠 3. Mind State Map
+
+**Install Dependencies:**
+```bash
+npm install recharts
+```
+
+**Implementation Example:**
+```tsx
+import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis } from 'recharts';
+
+const data = [
+  { emotion: 'Joy', value: 80 },
+  { emotion: 'Sadness', value: 20 },
+  // Add more emotions
+];
+
+function MindStateMap() {
+  return (
+    <RadarChart outerRadius={90} width={730} height={250} data={data}>
+      <PolarGrid />
+      <PolarAngleAxis dataKey="emotion" />
+      <PolarRadiusAxis />
+      <Radar name="Emotions" dataKey="value" stroke="#8884d8" fill="#8884d8" fillOpacity={0.6} />
+    </RadarChart>
+  );
+}
+```
+
+### ⚡ 4. Quantum Timeline
+
+**Install Dependencies:**
+```bash
+npm install react-flow-renderer zustand
+```
+
+**Implementation Example:**
+```tsx
+import ReactFlow from 'react-flow-renderer';
+
+const elements = [
+  { id: '1', type: 'input', data: { label: 'Start' }, position: { x: 250, y: 0 } },
+  // Add more nodes and edges
+];
+
+function QuantumTimeline() {
+  return <ReactFlow elements={elements} />;
+}
+```
+
+### 🎨 5. Tech Showcase
+
+**Install Dependencies:**
+```bash
+npm install three @react-three/fiber
+```
+
+**Implementation Example:**
+```tsx
+import { Canvas } from '@react-three/fiber';
+
+function TechShowcase() {
+  return (
+    <Canvas>
+      {/* Add 3D models and lighting */}
+    </Canvas>
+  );
+}
+```
+
+### 🎤 6. Voice Commands
+
+**Implementation Example:**
+```tsx
+function VoiceCommands() {
+  const recognition = new window.SpeechRecognition();
+  recognition.onresult = (event) => {
+    const command = event.results[0][0].transcript;
+    handleCommand(command);
+  };
+  recognition.start();
+  return <div>Listening...</div>;
+}
+```
+
+### 💳 7. Subscription System
+
+**Implementation Example:**
+```tsx
+function PremiumFeature({ user }) {
+  if (user.subscriptionTier < 2) {
+    return <div>Please upgrade to access this feature.</div>;
+  }
+  return <div>Premium Content</div>;
+}
+```
+
+### 🧪 8. Testing and Deployment
+
+**Install Testing Dependencies:**
+```bash
+npm install -D jest @testing-library/react @testing-library/jest-dom
+```
+
+**Example Test:**
+```tsx
+import { render, screen } from '@testing-library/react';
+import { OracleChat } from './OracleChat';
+
+test('renders Oracle Chat', () => {
+  render(<OracleChat />);
+  expect(screen.getByText(/Oracle Chat/i)).toBeInTheDocument();
+});
+```
+
 ## 🔧 Environment Variables
 
 Create a `.env` file in the root directory with the following structure:
@@ -87,7 +255,7 @@ src/
 └── types/              # TypeScript type definitions
 ```
 
-## �� UI Components
+## 🎯 UI Components
 
 ### Core Features
 - Oracle Chat with video conference
