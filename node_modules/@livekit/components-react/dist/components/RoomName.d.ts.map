@@ -1,0 +1,1 @@
+{"version":3,"file":"RoomName.d.ts","sourceRoot":"","sources":["../../src/components/RoomName.tsx"],"names":[],"mappings":"AAAA,OAAO,KAAK,KAAK,MAAM,OAAO,CAAC;AAG/B,cAAc;AACd,MAAM,WAAW,aAAc,SAAQ,KAAK,CAAC,cAAc,CAAC,eAAe,CAAC;IAC1E,gBAAgB,CAAC,EAAE,QAAQ,GAAG,OAAO,CAAC;CACvC;AAED;;;;;;;;;;GAUG;AACH,wBAAgB,QAAQ,CAAC,EACvB,gBAA2B,EAC3B,QAAQ,EACR,GAAG,cAAc,EAClB,EAAE,aAAa,qBAUf"}

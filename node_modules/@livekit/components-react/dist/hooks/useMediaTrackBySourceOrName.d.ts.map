@@ -1,0 +1,1 @@
+{"version":3,"file":"useMediaTrackBySourceOrName.d.ts","sourceRoot":"","sources":["../../src/hooks/useMediaTrackBySourceOrName.ts"],"names":[],"mappings":"AAAA,OAAO,KAAK,EAAE,eAAe,EAAE,MAAM,0BAA0B,CAAC;AAGhE,OAAO,KAAK,KAAK,MAAM,OAAO,CAAC;AAE/B,OAAO,KAAK,EAAE,oBAAoB,EAAE,MAAM,iBAAiB,CAAC;AAE5D;;GAEG;AACH,wBAAgB,2BAA2B,CACzC,eAAe,EAAE,eAAe,EAChC,OAAO,GAAE,oBAAyB;;;;;;EA2EnC"}
