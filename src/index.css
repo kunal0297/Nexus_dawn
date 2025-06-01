@@ -2,6 +2,70 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --cosmic-gradient: linear-gradient(45deg, #4f46e5, #7c3aed, #2563eb);
+}
+
+.cosmic-mode {
+  background: var(--cosmic-gradient);
+  background-size: 400% 400%;
+  animation: cosmic-gradient 15s ease infinite;
+}
+
+@keyframes cosmic-gradient {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.cosmic-mode * {
+  text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+}
+
+.cosmic-mode .bg-white {
+  background: rgba(255, 255, 255, 0.1);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+}
+
+.cosmic-mode .bg-gray-100 {
+  background: rgba(255, 255, 255, 0.05);
+  -webkit-backdrop-filter: blur(5px);
+  backdrop-filter: blur(5px);
+}
+
+.cosmic-mode .shadow-md {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+              0 2px 4px -1px rgba(0, 0, 0, 0.06),
+              0 0 0 1px rgba(255, 255, 255, 0.1);
+}
+
+/* Custom scrollbar for cosmic mode */
+.cosmic-mode ::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.cosmic-mode ::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+
+.cosmic-mode ::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+}
+
+.cosmic-mode ::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',

@@ -15,203 +15,112 @@ import {
   ResponsiveContainer
 } from 'recharts';
 import { motion } from 'framer-motion';
+import { useTheme } from '../contexts/ThemeContext';
+
+interface EmotionData {
+  emotion: string;
+  value: number;
+}
 
 interface MindStateMapProps {
-  memories: Memory[];
-  storyChoices: StoryChoice[];
+  initialData?: EmotionData[];
+  onEmotionChange?: (emotion: string, value: number) => void;
 }
 
-// Psychological traits for the radial chart
-const PSYCHOLOGICAL_TRAITS = [
-  'Fear',
-  'Hope',
-  'Curiosity',
-  'Trust',
-  'Control',
-  'Connection'
-] as const;
+const defaultEmotions: EmotionData[] = [
+  { emotion: 'Joy', value: 50 },
+  { emotion: 'Sadness', value: 30 },
+  { emotion: 'Anger', value: 20 },
+  { emotion: 'Fear', value: 40 },
+  { emotion: 'Trust', value: 60 },
+  { emotion: 'Surprise', value: 25 },
+  { emotion: 'Anticipation', value: 45 },
+  { emotion: 'Disgust', value: 15 }
+];
 
-type PsychologicalTrait = typeof PSYCHOLOGICAL_TRAITS[number];
+export const MindStateMap: React.FC<MindStateMapProps> = ({ 
+  initialData = defaultEmotions,
+  onEmotionChange 
+}) => {
+  const { isCosmicMode } = useTheme();
+  const [emotionData, setEmotionData] = useState<EmotionData[]>(initialData);
+  const [selectedEmotion, setSelectedEmotion] = useState<string | null>(null);
 
-interface TimelineDataPoint {
-  timestamp: Date;
-  type: 'memory' | 'choice';
-  mood?: string;
-  intensity?: number;
-  content?: string;
-  impact?: number;
-  description?: string;
-}
-
-interface RadarDataPoint {
-  [key: string]: number;
-}
-
-const MindStateMap: React.FC<MindStateMapProps> = ({ memories = [], storyChoices = [] }) => {
-  const [activeTab, setActiveTab] = useState<'timeline' | 'radar'>('timeline');
-  const [timelineData, setTimelineData] = useState<TimelineDataPoint[]>([]);
-  const [radarData, setRadarData] = useState<RadarDataPoint[]>([]);
-
-  useEffect(() => {
-    // Process memories and choices into timeline data
-    const processedData = processTimelineData(memories, storyChoices);
-    setTimelineData(processedData);
-
-    // Process data for radar chart
-    const processedRadarData = processRadarData(memories);
-    setRadarData(processedRadarData);
-  }, [memories, storyChoices]);
-
-  const processTimelineData = (memories: Memory[], choices: StoryChoice[]): TimelineDataPoint[] => {
-    const combinedData = [
-      ...memories.map(memory => ({
-        timestamp: new Date(memory.timestamp),
-        type: 'memory' as const,
-        mood: memory.mood,
-        intensity: memory.intensity,
-        content: memory.content
-      })),
-      ...choices.map(choice => ({
-        timestamp: new Date(choice.timestamp),
-        type: 'choice' as const,
-        impact: choice.impact,
-        description: choice.description
-      }))
-    ].sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
-
-    return combinedData;
+  const handleEmotionClick = (emotion: string) => {
+    setSelectedEmotion(emotion);
   };
 
-  const processRadarData = (memories: Memory[]): RadarDataPoint[] => {
-    // Calculate average values for each psychological trait
-    const traitValues = PSYCHOLOGICAL_TRAITS.map(trait => {
-      const values = memories.map(memory => {
-        // Map mood and intensity to trait values
-        const moodMap: Record<string, Record<PsychologicalTrait, number>> = {
-          'happy': { Hope: 0.8, Fear: 0.2, Curiosity: 0.6, Trust: 0.7, Control: 0.6, Connection: 0.8 },
-          'sad': { Hope: 0.3, Fear: 0.4, Curiosity: 0.5, Trust: 0.4, Control: 0.3, Connection: 0.6 },
-          'angry': { Hope: 0.4, Fear: 0.3, Curiosity: 0.7, Trust: 0.2, Control: 0.8, Connection: 0.4 },
-          'fearful': { Hope: 0.2, Fear: 0.9, Curiosity: 0.8, Trust: 0.3, Control: 0.2, Connection: 0.5 },
-          'neutral': { Hope: 0.5, Fear: 0.5, Curiosity: 0.5, Trust: 0.5, Control: 0.5, Connection: 0.5 }
-        };
-
-        const baseValue = moodMap[memory.mood][trait];
-        return baseValue * memory.intensity;
-      });
-
-      const average = values.reduce((a, b) => a + b, 0) / values.length;
-      return { trait, value: average };
-    });
-
-    return [{ ...Object.fromEntries(traitValues.map(t => [t.trait, t.value])) }];
-  };
-
-  interface CustomTooltipProps {
-    active?: boolean;
-    payload?: Array<{
-      payload: TimelineDataPoint;
-    }>;
-    label?: string;
-  }
-
-  const CustomTooltip: React.FC<CustomTooltipProps> = ({ active, payload, label }) => {
-    if (active && payload && payload.length) {
-      const data = payload[0].payload;
-      return (
-        <div className="bg-white p-4 rounded-lg shadow-lg border border-gray-200">
-          <p className="font-bold">{new Date(label || '').toLocaleString()}</p>
-          {data.type === 'memory' ? (
-            <>
-              <p>Mood: {data.mood}</p>
-              <p>Intensity: {data.intensity}</p>
-              <p className="text-sm text-gray-600">{data.content}</p>
-            </>
-          ) : (
-            <>
-              <p>Choice Impact: {data.impact}</p>
-              <p className="text-sm text-gray-600">{data.description}</p>
-            </>
-          )}
-        </div>
-      );
-    }
-    return null;
+  const handleValueChange = (emotion: string, newValue: number) => {
+    const updatedData = emotionData.map(item => 
+      item.emotion === emotion ? { ...item, value: newValue } : item
+    );
+    setEmotionData(updatedData);
+    onEmotionChange?.(emotion, newValue);
   };
 
   return (
-    <div className="w-full h-full p-4">
-      <div className="flex justify-center mb-4 space-x-4">
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          className={`px-4 py-2 rounded-lg ${
-            activeTab === 'timeline'
-              ? 'bg-blue-600 text-white'
-              : 'bg-gray-200 text-gray-700'
-          }`}
-          onClick={() => setActiveTab('timeline')}
-        >
-          Timeline View
-        </motion.button>
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          className={`px-4 py-2 rounded-lg ${
-            activeTab === 'radar'
-              ? 'bg-blue-600 text-white'
-              : 'bg-gray-200 text-gray-700'
-          }`}
-          onClick={() => setActiveTab('radar')}
-        >
-          Psychological Profile
-        </motion.button>
+    <motion.div
+      initial={{ opacity: 0, scale: 0.9 }}
+      animate={{ opacity: 1, scale: 1 }}
+      className={`p-6 rounded-xl ${
+        isCosmicMode 
+          ? 'bg-gradient-to-br from-purple-900/50 to-blue-900/50' 
+          : 'bg-white dark:bg-gray-800'
+      }`}
+    >
+      <h2 className="text-2xl font-bold mb-6 text-center text-gray-800 dark:text-white">
+        Mind State Map
+      </h2>
+      
+      <div className="h-[400px] w-full">
+        <ResponsiveContainer width="100%" height="100%">
+          <RadarChart outerRadius={150} data={emotionData}>
+            <PolarGrid 
+              stroke={isCosmicMode ? '#6366f1' : '#e5e7eb'} 
+              strokeDasharray="3 3"
+            />
+            <PolarAngleAxis 
+              dataKey="emotion" 
+              tick={{ fill: isCosmicMode ? '#a5b4fc' : '#4b5563' }}
+            />
+            <PolarRadiusAxis 
+              angle={30} 
+              domain={[0, 100]} 
+              tick={{ fill: isCosmicMode ? '#a5b4fc' : '#4b5563' }}
+            />
+            <Radar
+              name="Emotions"
+              dataKey="value"
+              stroke={isCosmicMode ? '#818cf8' : '#6366f1'}
+              fill={isCosmicMode ? '#818cf8' : '#6366f1'}
+              fillOpacity={0.6}
+              onClick={(data: any) => handleEmotionClick(data.emotion)}
+            />
+          </RadarChart>
+        </ResponsiveContainer>
       </div>
 
-      <div className="h-[500px] w-full">
-        {activeTab === 'timeline' ? (
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={timelineData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis
-                dataKey="timestamp"
-                tickFormatter={(timestamp) => new Date(timestamp).toLocaleDateString()}
-              />
-              <YAxis />
-              <Tooltip content={<CustomTooltip />} />
-              <Legend />
-              <Line
-                type="monotone"
-                dataKey="intensity"
-                stroke="#8884d8"
-                name="Emotional Intensity"
-              />
-              <Line
-                type="monotone"
-                dataKey="impact"
-                stroke="#82ca9d"
-                name="Choice Impact"
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        ) : (
-          <ResponsiveContainer width="100%" height="100%">
-            <RadarChart data={radarData}>
-              <PolarGrid />
-              <PolarAngleAxis dataKey="trait" />
-              <PolarRadiusAxis angle={30} domain={[0, 1]} />
-              <Radar
-                name="Psychological Profile"
-                dataKey="value"
-                stroke="#8884d8"
-                fill="#8884d8"
-                fillOpacity={0.6}
-              />
-            </RadarChart>
-          </ResponsiveContainer>
-        )}
-      </div>
-    </div>
+      {selectedEmotion && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mt-6 p-4 bg-gray-100 dark:bg-gray-700 rounded-lg"
+        >
+          <h3 className="text-lg font-semibold mb-2 text-gray-800 dark:text-white">
+            {selectedEmotion}
+          </h3>
+          <input
+            type="range"
+            min="0"
+            max="100"
+            value={emotionData.find(e => e.emotion === selectedEmotion)?.value || 0}
+            onChange={(e) => handleValueChange(selectedEmotion, parseInt(e.target.value))}
+            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+            aria-label={`Adjust ${selectedEmotion} value`}
+            title={`Adjust ${selectedEmotion} value`}
+          />
+        </motion.div>
+      )}
+    </motion.div>
   );
-};
-
-export default MindStateMap; 
+}; 

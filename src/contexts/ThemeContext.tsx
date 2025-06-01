@@ -3,31 +3,28 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 interface ThemeContextType {
   isCosmicMode: boolean;
   toggleCosmicMode: () => void;
-  cosmicLevel: number;
-  setCosmicLevel: (level: number) => void;
 }
 
-const ThemeContext = createContext<ThemeContextType | null>(null);
+const ThemeContext = createContext<ThemeContextType>({
+  isCosmicMode: false,
+  toggleCosmicMode: () => {},
+});
 
-export const useTheme = () => {
-  const context = useContext(ThemeContext);
-  if (!context) {
-    throw new Error('useTheme must be used within a ThemeProvider');
-  }
-  return context;
-};
+export const useTheme = () => useContext(ThemeContext);
 
-interface Props {
-  children: React.ReactNode;
-}
-
-export const ThemeProvider: React.FC<Props> = ({ children }) => {
-  const [isCosmicMode, setIsCosmicMode] = useState(false);
-  const [cosmicLevel, setCosmicLevel] = useState(0);
+export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [isCosmicMode, setIsCosmicMode] = useState(() => {
+    const saved = localStorage.getItem('cosmicMode');
+    return saved ? JSON.parse(saved) : false;
+  });
 
   useEffect(() => {
-    // Apply theme class to body
-    document.body.classList.toggle('cosmic-mode', isCosmicMode);
+    localStorage.setItem('cosmicMode', JSON.stringify(isCosmicMode));
+    if (isCosmicMode) {
+      document.documentElement.classList.add('cosmic-mode');
+    } else {
+      document.documentElement.classList.remove('cosmic-mode');
+    }
   }, [isCosmicMode]);
 
   const toggleCosmicMode = () => {
@@ -35,14 +32,7 @@ export const ThemeProvider: React.FC<Props> = ({ children }) => {
   };
 
   return (
-    <ThemeContext.Provider
-      value={{
-        isCosmicMode,
-        toggleCosmicMode,
-        cosmicLevel,
-        setCosmicLevel
-      }}
-    >
+    <ThemeContext.Provider value={{ isCosmicMode, toggleCosmicMode }}>
       {children}
     </ThemeContext.Provider>
   );
