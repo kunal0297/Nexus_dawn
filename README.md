@@ -25,6 +25,14 @@
 | 🎨 Tech Showcase | 3D interactive technology display | ✅ |
 | 🎤 Voice Commands | Natural language interface control | ✅ |
 | 💳 Subscription System | Tiered access control | ✅ |
+| 🔐 Time-Locked Messages | Schedule messages for future delivery | ✅ |
+| 📝 Memory Journal | Create and manage personal memories | ✅ |
+| 🤖 Reddit Integration | Automated Reddit bot functionality | ✅ |
+| 💰 Wallet Integration | Blockchain wallet connection | ✅ |
+| 🎭 Personality Shards | View and manage personality aspects | ✅ |
+| 🌌 Cosmic Signals | Interact with cosmic signal interface | ✅ |
+| 🎨 Theme System | Light/Dark mode with cosmic theme | ✅ |
+| 🔄 Quantum Save | Advanced state management system | ✅ |
 
 </div>
 
@@ -79,37 +87,39 @@ src/
 └── types/              # TypeScript type definitions
 ```
 
-## 🎨 UI Components
+## �� UI Components
 
-### Navigation
-- Modern bottom navigation bar
-- Subscription status indicator
-- Feature access control
-- Voice command support
+### Core Features
+- Oracle Chat with video conference
+- Mind State Map visualization
+- Quantum Timeline management
+- Identity Scanner
+- Voice Command Interface
+- Subscription Management
 
-### Oracle Chat
-- Real-time video conference
-- AI-powered conversation
-- Message history
-- Voice input support
+### Memory & Narrative
+- Memory Journal Composer
+- Memory Viewer with filters
+- Narrative Interface
+- Narrative Timeline
+- Personality Shard Viewer
+- Time-Locked Message Manager
 
-### Mind State Map
-- Timeline visualization
-- Radial emotion mapping
-- Memory tracking
-- Story choice impact
+### Integration & Services
+- Reddit Bot Interface
+- Wallet Connection
+- Blockchain Integration
+- Cosmic Signal Interface
+- Theme Toggle System
+- Quantum Save Manager
 
-### Quantum Timeline
-- Branching story states
-- State snapshots
-- Timeline visualization
-- State management
-
-### Tech Showcase
-- 3D interactive display
-- Technology logos
-- Smooth animations
-- Responsive design
+### UI Elements
+- Modern Navigation Bar
+- Loading Spinner
+- Error Messages
+- 3D Marquee Effects
+- Cosmic Avatar
+- Tavus Avatar
 
 ## 🛠️ Technologies
 
