@@ -1,31 +1,73 @@
-# dependencies
+# Dependencies
 /node_modules
 /.pnp
 .pnp.js
 
-# testing
+# Testing
 /coverage
+/test-results.json
 
-# production
+# Production
 /build
+/dist
 
-# misc
-.DS_Store
+# Environment files
 .env
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
 
+# Debug logs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# IDE
-.idea/
-.vscode/
-*.swp
-*.swo
+# Editor directories and files
+.idea
+.vscode
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
 
-# OS
-Thumbs.db 
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# TypeScript
+*.tsbuildinfo
+
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache
+
+# Optional REPL history
+.node_repl_history
+
+# Output of 'npm pack'
+*.tgz
+
+# Yarn Integrity file
+.yarn-integrity
+
+# Cache directories
+.cache
+.parcel-cache
+
+# Misc
+*.log
+*.csv
+*.dat
+*.out
+*.pid
+*.seed
+*.pid.lock 

@@ -1,27 +1,20 @@
 import type { ParticipantClickEvent, TrackReferenceOrPlaceholder } from '@livekit/components-core';
 import { setupParticipantTile } from '@livekit/components-core';
-import type { TrackPublication, Participant } from 'livekit-client';
-import { Track } from 'livekit-client';
 import * as React from 'react';
-import { useEnsureParticipant, useMaybeTrackRefContext } from '../context';
+import { useEnsureTrackRef } from '../context';
 import { mergeProps } from '../mergeProps';
 import { useFacingMode } from './useFacingMode';
 import { useIsMuted } from './useIsMuted';
 import { useIsSpeaking } from './useIsSpeaking';
+import { Track } from 'livekit-client';
 
 /** @public */
 export interface UseParticipantTileProps<T extends HTMLElement> extends React.HTMLAttributes<T> {
   /** The track reference to display. */
   trackRef?: TrackReferenceOrPlaceholder;
   disableSpeakingIndicator?: boolean;
-  /** @deprecated This parameter will be removed in a future version use `trackRef` instead. */
-  publication?: TrackPublication;
   onParticipantClick?: (event: ParticipantClickEvent) => void;
   htmlProps: React.HTMLAttributes<T>;
-  /** @deprecated This parameter will be removed in a future version use `trackRef` instead. */
-  source?: Track.Source;
-  /** @deprecated This parameter will be removed in a future version use `trackRef` instead. */
-  participant?: Participant;
 }
 
 /**
@@ -34,40 +27,11 @@ export interface UseParticipantTileProps<T extends HTMLElement> extends React.HT
  */
 export function useParticipantTile<T extends HTMLElement>({
   trackRef,
-  participant,
-  source,
-  publication,
   onParticipantClick,
   disableSpeakingIndicator,
   htmlProps,
 }: UseParticipantTileProps<T>) {
-  // TODO: Remove and refactor after deprecation period to use:
-  // const trackReference = useEnsureTrackRefContext(trackRef)`.
-  const maybeTrackRef = useMaybeTrackRefContext();
-  const p = useEnsureParticipant(participant);
-  const trackReference = React.useMemo(() => {
-    const _source = trackRef?.source ?? maybeTrackRef?.source ?? source;
-    if (_source === undefined) {
-      throw new Error(
-        'Missing track `source`, provided it via `trackRef`, `source` property or via `TrackRefContext`.',
-      );
-    }
-    return {
-      participant: trackRef?.participant ?? maybeTrackRef?.participant ?? p,
-      publication: trackRef?.publication ?? maybeTrackRef?.publication ?? publication,
-      source: _source,
-    };
-  }, [
-    trackRef?.participant,
-    trackRef?.source,
-    trackRef?.publication,
-    maybeTrackRef?.participant,
-    maybeTrackRef?.source,
-    maybeTrackRef?.publication,
-    p,
-    source,
-    publication,
-  ]);
+  const trackReference = useEnsureTrackRef(trackRef);
 
   const mergedProps = React.useMemo(() => {
     const { className } = setupParticipantTile();
@@ -78,7 +42,7 @@ export function useParticipantTile<T extends HTMLElement>({
         if (typeof onParticipantClick === 'function') {
           const track =
             trackReference.publication ??
-            trackReference.participant.getTrack(trackReference.source);
+            trackReference.participant.getTrackPublication(trackReference.source);
           onParticipantClick({ participant: trackReference.participant, track });
         }
       },
@@ -90,10 +54,17 @@ export function useParticipantTile<T extends HTMLElement>({
     trackReference.source,
     trackReference.participant,
   ]);
-  const isVideoMuted = useIsMuted(Track.Source.Camera, { participant: trackReference.participant });
-  const isAudioMuted = useIsMuted(Track.Source.Microphone, {
-    participant: trackReference.participant,
-  });
+
+  const micTrack = trackReference.participant.getTrackPublication(Track.Source.Microphone);
+  const micRef = React.useMemo(() => {
+    return {
+      participant: trackReference.participant,
+      source: Track.Source.Microphone,
+      publication: micTrack,
+    };
+  }, [micTrack, trackReference.participant]);
+  const isVideoMuted = useIsMuted(trackReference);
+  const isAudioMuted = useIsMuted(micRef);
   const isSpeaking = useIsSpeaking(trackReference.participant);
   const facingMode = useFacingMode(trackReference);
   return {

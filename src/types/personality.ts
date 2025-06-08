@@ -16,25 +16,27 @@ export interface RedditComment {
 }
 
 export interface UserActivity {
-  posts: RedditPost[];
-  comments: RedditComment[];
+  type: 'post' | 'comment';
+  content: string;
+  timestamp: number;
+  subreddit?: string;
+  karma?: number;
 }
 
 export interface PersonalityWeights {
-  creativity: number;
-  analytical: number;
-  emotional: number;
-  social: number;
-  technical: number;
-  philosophical: number;
+  openness: number;
+  conscientiousness: number;
+  extraversion: number;
+  agreeableness: number;
+  neuroticism: number;
 }
 
 export interface PersonalityShard {
-  username: string;
-  weights: PersonalityWeights;
-  embedding: number[];
+  id: string;
+  content: string;
+  traits: string[];
+  emotionalWeight: number;
   timestamp: number;
-  version: number;
 }
 
 export interface PersonalityEvolution {

@@ -1,14 +1,14 @@
 import algosdk from 'algosdk';
 import { blockchainService } from './BlockchainService';
-import { Configuration, OpenAIApi } from 'openai';
-import { TavusCVI } from '@tavus/cvi-sdk';
+import { GoogleGenerativeAI } from '@google/generative-ai';
+import { PersonalityShard } from '../types/personality';
 import { NarrativeState, StoryFork, NarrativeChoice } from '../types/narrative';
 
-class NarrativeService {
+export class NarrativeService {
   private static instance: NarrativeService;
   private algodClient: algosdk.Algodv2;
-  private openai: OpenAIApi;
-  private tavus: TavusCVI;
+  private genAI: GoogleGenerativeAI;
+  private model: any;
   private readonly NARRATIVE_APP_ID: number;
 
   private constructor() {
@@ -18,15 +18,8 @@ class NarrativeService {
       process.env.REACT_APP_ALGORAND_PORT || ''
     );
 
-    const openaiConfig = new Configuration({
-      apiKey: process.env.REACT_APP_OPENAI_API_KEY,
-    });
-    this.openai = new OpenAIApi(openaiConfig);
-
-    this.tavus = new TavusCVI({
-      apiKey: process.env.REACT_APP_TAVUS_API_KEY || '',
-      modelId: process.env.REACT_APP_TAVUS_MODEL_ID || ''
-    });
+    this.genAI = new GoogleGenerativeAI(process.env.REACT_APP_GEMINI_API_KEY || '');
+    this.model = this.genAI.getGenerativeModel({ model: 'gemini-pro' });
 
     this.NARRATIVE_APP_ID = Number(process.env.REACT_APP_NARRATIVE_APP_ID) || 0;
   }
@@ -36,6 +29,40 @@ class NarrativeService {
       NarrativeService.instance = new NarrativeService();
     }
     return NarrativeService.instance;
+  }
+
+  async generateNarrative(shards: PersonalityShard[]): Promise<string> {
+    try {
+      const prompt = `Generate a narrative based on these personality shards: ${JSON.stringify(shards)}`;
+      const result = await this.model.generateContent(prompt);
+      const response = await result.response;
+      return response.text();
+    } catch (error) {
+      console.error('Error generating narrative:', error);
+      throw error;
+    }
+  }
+
+  async analyzeNarrative(narrative: string): Promise<{
+    themes: string[];
+    emotionalTone: string;
+    complexity: number;
+  }> {
+    try {
+      const prompt = `Analyze this narrative and provide themes, emotional tone, and complexity: ${narrative}`;
+      const result = await this.model.generateContent(prompt);
+      const response = await result.response;
+      const analysis = JSON.parse(response.text());
+
+      return {
+        themes: analysis.themes || [],
+        emotionalTone: analysis.emotionalTone || 'neutral',
+        complexity: analysis.complexity || 0.5,
+      };
+    } catch (error) {
+      console.error('Error analyzing narrative:', error);
+      throw error;
+    }
   }
 
   private async generateStoryFork(
@@ -72,14 +99,9 @@ class NarrativeService {
         }
       `;
 
-      const response = await this.openai.createCompletion({
-        model: "text-davinci-003",
-        prompt,
-        max_tokens: 500,
-        temperature: 0.7
-      });
-
-      const forkData = JSON.parse(response.data.choices[0].text || '{}');
+      const response = await this.model.generateContent(prompt);
+      const result = await response.response;
+      const forkData = JSON.parse(result.text());
       
       return {
         id: Date.now().toString(),
@@ -134,27 +156,11 @@ class NarrativeService {
       
       await algosdk.waitForConfirmation(this.algodClient, txId, 3);
 
-      // Generate avatar narration
-      await this.tavus.speak(newFork.description, {
-        emotion: this.determineEmotion(newFork),
-        style: 'narrative'
-      });
-
       return newFork;
     } catch (error) {
       console.error('Error creating narrative fork:', error);
       throw error;
     }
-  }
-
-  private determineEmotion(fork: StoryFork): string {
-    // Simple emotion detection based on keywords
-    const text = fork.description.toLowerCase();
-    if (text.includes('happy') || text.includes('joy')) return 'happy';
-    if (text.includes('sad') || text.includes('grief')) return 'sad';
-    if (text.includes('angry') || text.includes('rage')) return 'angry';
-    if (text.includes('fear') || text.includes('scared')) return 'fearful';
-    return 'neutral';
   }
 
   public async getNarrativeState(userId: string): Promise<NarrativeState | null> {
@@ -226,12 +232,6 @@ class NarrativeService {
       const { txId } = await this.algodClient.sendRawTransaction(signedTxn).do();
       
       await algosdk.waitForConfirmation(this.algodClient, txId, 3);
-
-      // Generate initial avatar narration
-      await this.tavus.speak(initialFork.description, {
-        emotion: 'neutral',
-        style: 'narrative'
-      });
 
       return initialState;
     } catch (error) {

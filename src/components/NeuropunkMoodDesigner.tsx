@@ -1,268 +1,187 @@
-import React, { useState, useCallback, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useState, useCallback } from 'react';
+import { motion } from 'framer-motion';
 import { useTheme } from '../contexts/ThemeContext';
-import { EmotionData, EmotionType } from '../types/emotions';
+import { EmotionKnob } from '../components/EmotionKnob';
+import { EmotionalResonance } from './EmotionalResonance';
+import { useEmotionalState } from '../hooks/useEmotionalState';
+import { EmotionalService } from '../services/EmotionalService';
+import { EmotionalPreset } from '../types/emotions';
+import { ExpandableSection } from './ExpandableSection';
 
-interface MoodPreset {
-  id: string;
-  name: string;
-  emotions: EmotionData[];
-  description: string;
-}
-
-interface MoodDesignerProps {
-  onMoodChange?: (emotions: EmotionData[]) => void;
-  initialEmotions?: EmotionData[];
-}
-
-const defaultPresets: MoodPreset[] = [
-  {
-    id: 'euphoria',
-    name: 'Cosmic Euphoria',
-    description: 'A state of pure joy and wonder',
-    emotions: [
-      { emotion: 'Joy', value: 90 },
-      { emotion: 'Trust', value: 80 },
-      { emotion: 'Anticipation', value: 70 },
-      { emotion: 'Surprise', value: 60 },
-      { emotion: 'Fear', value: 10 },
-      { emotion: 'Sadness', value: 5 },
-      { emotion: 'Anger', value: 5 },
-      { emotion: 'Disgust', value: 5 }
-    ]
-  },
-  {
-    id: 'serenity',
-    name: 'Quantum Serenity',
-    description: 'Deep peace and trust',
-    emotions: [
-      { emotion: 'Trust', value: 85 },
-      { emotion: 'Joy', value: 70 },
-      { emotion: 'Anticipation', value: 40 },
-      { emotion: 'Fear', value: 20 },
-      { emotion: 'Sadness', value: 15 },
-      { emotion: 'Anger', value: 10 },
-      { emotion: 'Surprise', value: 30 },
-      { emotion: 'Disgust', value: 5 }
-    ]
-  },
-  {
-    id: 'focus',
-    name: 'Neural Focus',
-    description: 'Sharp concentration and clarity',
-    emotions: [
-      { emotion: 'Anticipation', value: 75 },
-      { emotion: 'Trust', value: 60 },
-      { emotion: 'Joy', value: 40 },
-      { emotion: 'Fear', value: 30 },
-      { emotion: 'Surprise', value: 20 },
-      { emotion: 'Sadness', value: 15 },
-      { emotion: 'Anger', value: 10 },
-      { emotion: 'Disgust', value: 5 }
-    ]
-  }
+const MOOD_PRESETS: EmotionalPreset[] = [
+  EmotionalService.createPreset(
+    'quantum-bliss',
+    'Quantum Bliss',
+    'A state of transcendent joy and cosmic harmony',
+    { valence: 0.9, arousal: 0.7, dominance: 0.8 }
+  ),
+  EmotionalService.createPreset(
+    'neural-serenity',
+    'Neural Serenity',
+    'Deep peace and mental clarity',
+    { valence: 0.7, arousal: 0.3, dominance: 0.6 }
+  ),
+  EmotionalService.createPreset(
+    'cyber-focus',
+    'Cyber Focus',
+    'Enhanced concentration and digital flow',
+    { valence: 0.6, arousal: 0.8, dominance: 0.9 }
+  ),
+  EmotionalService.createPreset(
+    'quantum-melancholy',
+    'Quantum Melancholy',
+    'Profound emotional depth and cosmic awareness',
+    { valence: 0.3, arousal: 0.4, dominance: 0.5 }
+  ),
+  EmotionalService.createPreset(
+    'energetic',
+    'Energetic',
+    'High energy and motivation',
+    { valence: 0.8, arousal: 0.9, dominance: 0.7 }
+  )
 ];
 
-const EmotionKnob: React.FC<{
-  emotion: EmotionData;
-  onChange: (value: number) => void;
-  isActive: boolean;
-}> = ({ emotion, onChange, isActive }) => {
+export const NeuropunkMoodDesigner: React.FC = () => {
   const { isCosmicMode } = useTheme();
-  const [isDragging, setIsDragging] = useState(false);
+  const [showPresets, setShowPresets] = useState(false);
+  
+  const {
+    emotions,
+    resonance,
+    handleEmotionChange,
+    applyPreset,
+    blendWithPreset,
+    getEmotionColor
+  } = useEmotionalState({
+    onEmotionalChange: (state) => {
+      console.log('Emotional state changed:', state);
+    }
+  });
 
-  const handleMouseDown = useCallback((e: React.MouseEvent) => {
-    setIsDragging(true);
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
-  }, []);
+  const handlePresetSelect = useCallback((preset: EmotionalPreset) => {
+    applyPreset(preset);
+    setShowPresets(false);
+  }, [applyPreset]);
 
-  const handleMouseMove = useCallback((e: MouseEvent) => {
-    if (!isDragging) return;
-    const rect = (e.target as HTMLElement).getBoundingClientRect();
-    const y = e.clientY - rect.top;
-    const value = Math.max(0, Math.min(100, 100 - (y / rect.height) * 100));
-    onChange(value);
-  }, [isDragging, onChange]);
-
-  const handleMouseUp = useCallback(() => {
-    setIsDragging(false);
-    document.removeEventListener('mousemove', handleMouseMove);
-    document.removeEventListener('mouseup', handleMouseUp);
-  }, [handleMouseMove]);
+  const handleBlend = useCallback(() => {
+    const currentPreset = MOOD_PRESETS.find(preset => 
+      preset.emotions.valence === emotions.valence &&
+      preset.emotions.arousal === emotions.arousal &&
+      preset.emotions.dominance === emotions.dominance
+    ) || MOOD_PRESETS[0];
+    blendWithPreset(currentPreset, 0.5);
+  }, [blendWithPreset, emotions]);
 
   return (
-    <motion.div
-      className={`relative w-16 h-32 rounded-lg ${
-        isCosmicMode
-          ? 'bg-gradient-to-b from-purple-900/50 to-blue-900/50'
-          : 'bg-gray-800'
-      } p-2`}
-      whileHover={{ scale: 1.05 }}
-      whileTap={{ scale: 0.95 }}
+    <div
+      data-testid="mood-designer"
+      className={`p-6 rounded-lg${isCosmicMode ? ' cosmic-mode bg-gradient-to-br from-purple-900/50 to-blue-900/50' : ' bg-white shadow-lg'}`}
+      role="region"
+      aria-label="Neuropunk Mood Designer"
     >
-      <div
-        className="absolute inset-0 cursor-pointer"
-        onMouseDown={handleMouseDown}
-      />
-      <div className="h-full flex flex-col items-center justify-between">
-        <span className="text-xs text-gray-400">{emotion.emotion}</span>
-        <div className="relative w-8 h-8">
-          <div
-            className={`absolute inset-0 rounded-full ${
-              isActive
-                ? isCosmicMode
-                  ? 'bg-purple-500'
-                  : 'bg-blue-500'
-                : 'bg-gray-600'
-            }`}
-            style={{
-              transform: `rotate(${(emotion.value / 100) * 270}deg)`,
-            }}
-          />
-        </div>
-        <span className="text-xs text-gray-400">{Math.round(emotion.value)}%</span>
-      </div>
-    </motion.div>
-  );
-};
-
-export const NeuropunkMoodDesigner: React.FC<MoodDesignerProps> = ({
-  onMoodChange,
-  initialEmotions = defaultPresets[0].emotions,
-}) => {
-  const { isCosmicMode } = useTheme();
-  const [emotions, setEmotions] = useState<EmotionData[]>(initialEmotions);
-  const [selectedPreset, setSelectedPreset] = useState<string | null>(null);
-  const [isPresetMenuOpen, setIsPresetMenuOpen] = useState(false);
-
-  useEffect(() => {
-    onMoodChange?.(emotions);
-  }, [emotions, onMoodChange]);
-
-  const handleEmotionChange = useCallback((emotion: string, value: number) => {
-    setEmotions(prev =>
-      prev.map(e => (e.emotion === emotion ? { ...e, value } : e))
-    );
-  }, []);
-
-  const handlePresetSelect = useCallback((preset: MoodPreset) => {
-    setEmotions(preset.emotions);
-    setSelectedPreset(preset.id);
-    setIsPresetMenuOpen(false);
-  }, []);
-
-  const handleSavePreset = useCallback(() => {
-    const name = prompt('Enter preset name:');
-    if (!name) return;
-
-    const newPreset: MoodPreset = {
-      id: `preset-${Date.now()}`,
-      name,
-      description: 'Custom preset',
-      emotions: [...emotions],
-    };
-
-    defaultPresets.push(newPreset);
-    setSelectedPreset(newPreset.id);
-  }, [emotions]);
-
-  return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      className={`p-6 rounded-xl ${
-        isCosmicMode
-          ? 'bg-gradient-to-br from-purple-900/50 to-blue-900/50'
-          : 'bg-white dark:bg-gray-800'
-      }`}
-    >
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold text-gray-800 dark:text-white">
+      <div className="flex items-center justify-between mb-6">
+        <h2 className={`text-2xl font-bold ${isCosmicMode ? 'text-white' : 'text-gray-900'}`}>
           Neuropunk Mood Designer
         </h2>
-        <div className="relative">
-          <button
-            onClick={() => setIsPresetMenuOpen(!isPresetMenuOpen)}
-            className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
-          >
-            {selectedPreset
-              ? defaultPresets.find(p => p.id === selectedPreset)?.name
-              : 'Select Preset'}
-          </button>
-          <AnimatePresence>
-            {isPresetMenuOpen && (
-              <motion.div
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-700 rounded-lg shadow-lg z-10"
-              >
-                {defaultPresets.map(preset => (
-                  <button
-                    key={preset.id}
-                    onClick={() => handlePresetSelect(preset)}
-                    className="w-full px-4 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-600 text-gray-800 dark:text-white"
-                  >
-                    {preset.name}
-                  </button>
-                ))}
-                <button
-                  onClick={handleSavePreset}
-                  className="w-full px-4 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-600 text-purple-600 dark:text-purple-400 border-t border-gray-200 dark:border-gray-600"
-                >
-                  Save Current as Preset
-                </button>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
+        <button
+          onClick={() => setShowPresets(!showPresets)}
+          className={`px-4 py-2 rounded ${
+            isCosmicMode ? 'bg-purple-600 text-white' : 'bg-gray-100 text-gray-900'
+          }`}
+          aria-expanded="false"
+        >
+          {showPresets ? 'Hide Presets' : 'Show Presets'}
+        </button>
       </div>
 
-      <div className="grid grid-cols-4 gap-4">
-        {emotions.map(emotion => (
-          <EmotionKnob
-            key={emotion.emotion}
-            emotion={emotion}
-            onChange={(value) => handleEmotionChange(emotion.emotion, value)}
-            isActive={emotion.value > 0}
-          />
-        ))}
-      </div>
-
-      <div className="mt-6 p-4 bg-gray-100 dark:bg-gray-700 rounded-lg">
-        <h3 className="text-lg font-semibold mb-2 text-gray-800 dark:text-white">
-          Current Mood State
-        </h3>
-        <div className="space-y-2">
-          {emotions
-            .filter(e => e.value > 0)
-            .sort((a, b) => b.value - a.value)
-            .map(emotion => (
-              <div
-                key={emotion.emotion}
-                className="flex items-center justify-between"
+      {showPresets && (
+        <div className="mb-6">
+          <h3 className="font-bold mb-2">Mood Presets</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {MOOD_PRESETS.map(preset => (
+              <motion.button
+                key={preset.id}
+                onClick={() => handlePresetSelect(preset)}
+                className={`p-4 rounded-lg text-left transition-colors ${
+                  isCosmicMode
+                    ? 'bg-purple-800/50 hover:bg-purple-700/50 text-white'
+                    : 'bg-gray-50 hover:bg-gray-100 text-gray-900'
+                }`}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
               >
-                <span className="text-gray-600 dark:text-gray-300">
-                  {emotion.emotion}
-                </span>
-                <div className="w-32 h-2 bg-gray-200 dark:bg-gray-600 rounded-full overflow-hidden">
-                  <motion.div
-                    className={`h-full ${
-                      isCosmicMode ? 'bg-purple-500' : 'bg-blue-500'
-                    }`}
-                    initial={{ width: 0 }}
-                    animate={{ width: `${emotion.value}%` }}
-                    transition={{ duration: 0.3 }}
-                  />
-                </div>
-                <span className="text-gray-600 dark:text-gray-300 w-12 text-right">
-                  {Math.round(emotion.value)}%
-                </span>
-              </div>
+                <h3 className="font-semibold mb-1">{preset.name}</h3>
+                <p className={`text-sm ${isCosmicMode ? 'text-purple-200' : 'text-gray-600'}`}>
+                  {preset.description}
+                </p>
+              </motion.button>
             ))}
+          </div>
+          <button 
+            onClick={handleBlend}
+            className="mt-4 px-4 py-2 rounded bg-blue-600 text-white"
+          >
+            Blend
+          </button>
+        </div>
+      )}
+
+      <div className="space-y-6">
+        <EmotionalResonance
+          valence={emotions.valence}
+          arousal={emotions.arousal}
+          dominance={emotions.dominance}
+          cosmicMode={isCosmicMode}
+        />
+        <div className="flex gap-4">
+          <div className="flex-1 text-center">
+            <span className="block font-bold">Intensity</span>
+          </div>
+          <div className="flex-1 text-center">
+            <span className="block font-bold">Harmony</span>
+          </div>
+          <div className="flex-1 text-center">
+            <span className="block font-bold">Stability</span>
+          </div>
+        </div>
+        <div className="space-y-4">
+          <div>
+            <label className={`block text-sm font-medium mb-2 ${isCosmicMode ? 'text-white' : 'text-gray-700'}`}>
+              Valence (Pleasure)
+            </label>
+            <EmotionKnob
+              value={emotions.valence}
+              onChange={(value: number) => handleEmotionChange('valence', value)}
+              gradient={getEmotionColor('valence')}
+              cosmicMode={isCosmicMode}
+            />
+          </div>
+
+          <div>
+            <label className={`block text-sm font-medium mb-2 ${isCosmicMode ? 'text-white' : 'text-gray-700'}`}>
+              Arousal (Energy)
+            </label>
+            <EmotionKnob
+              value={emotions.arousal}
+              onChange={(value: number) => handleEmotionChange('arousal', value)}
+              gradient={getEmotionColor('arousal')}
+              cosmicMode={isCosmicMode}
+            />
+          </div>
+
+          <div>
+            <label className={`block text-sm font-medium mb-2 ${isCosmicMode ? 'text-white' : 'text-gray-700'}`}>
+              Dominance (Control)
+            </label>
+            <EmotionKnob
+              value={emotions.dominance}
+              onChange={(value: number) => handleEmotionChange('dominance', value)}
+              gradient={getEmotionColor('dominance')}
+              cosmicMode={isCosmicMode}
+            />
+          </div>
         </div>
       </div>
-    </motion.div>
+    </div>
   );
-}; 
+};

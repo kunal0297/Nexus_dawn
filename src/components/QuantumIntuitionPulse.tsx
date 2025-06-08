@@ -2,6 +2,7 @@ import React, { useState, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTheme } from '../contexts/ThemeContext';
 import { EmotionData } from '../types/emotions';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
 interface IntuitionPulse {
   id: string;
@@ -21,30 +22,13 @@ export const QuantumIntuitionPulse: React.FC = () => {
   const analyzeEmotionalPatterns = useCallback(async (emotions: EmotionData[]) => {
     setIsAnalyzing(true);
     try {
-      // Simulate API call to analyze emotional patterns
-      const response = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${process.env.REACT_APP_OPENAI_API_KEY}`,
-        },
-        body: JSON.stringify({
-          model: 'gpt-4',
-          messages: [
-            {
-              role: 'system',
-              content: 'You are an AI that analyzes emotional patterns and provides intuitive insights.',
-            },
-            {
-              role: 'user',
-              content: `Analyze these emotional patterns: ${JSON.stringify(emotions)}`,
-            },
-          ],
-        }),
-      });
+      const genAI = new GoogleGenerativeAI(process.env.REACT_APP_GEMINI_API_KEY || '');
+      const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
 
-      const data = await response.json();
-      const insight = data.choices[0].message.content;
+      const prompt = `Analyze these emotional patterns and provide intuitive insights: ${JSON.stringify(emotions)}`;
+      const result = await model.generateContent(prompt);
+      const response = await result.response;
+      const insight = response.text();
 
       const newPulse: IntuitionPulse = {
         id: Date.now().toString(),

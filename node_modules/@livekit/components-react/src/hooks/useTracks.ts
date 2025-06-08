@@ -27,8 +27,8 @@ export type UseTracksOptions = {
 export type UseTracksHookReturnType<T> = T extends Track.Source[]
   ? TrackReference[]
   : T extends TrackSourceWithOptions[]
-  ? TrackReferenceOrPlaceholder[]
-  : never;
+    ? TrackReferenceOrPlaceholder[]
+    : never;
 
 /**
  * The `useTracks` hook returns an array of `TrackReference` or `TrackReferenceOrPlaceholder` depending on the provided `sources` property.
@@ -74,7 +74,12 @@ export function useTracks<T extends SourcesArray = Track.Source[]>(
       setParticipants(participants);
     });
     return () => subscription.unsubscribe();
-  }, [room, JSON.stringify(options.updateOnlyOn), JSON.stringify(sources)]);
+  }, [
+    room,
+    JSON.stringify(options.onlySubscribed),
+    JSON.stringify(options.updateOnlyOn),
+    JSON.stringify(sources),
+  ]);
 
   const maybeTrackReferences = React.useMemo(() => {
     if (isSourcesWithOptions(sources)) {
@@ -133,7 +138,7 @@ export function requiredPlaceholders<T extends SourcesArray>(
 
     participants.forEach((participant) => {
       const sourcesOfSubscribedTracks = participant
-        .getTracks()
+        .getTrackPublications()
         .map((pub) => pub.track?.source)
         .filter((trackSource): trackSource is Track.Source => trackSource !== undefined);
       const placeholderNeededForThisParticipant = Array.from(

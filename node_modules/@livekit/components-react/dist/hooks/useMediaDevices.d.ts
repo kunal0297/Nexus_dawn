@@ -8,7 +8,8 @@
  * ```
  * @public
  */
-export declare function useMediaDevices({ kind }: {
+export declare function useMediaDevices({ kind, onError, }: {
     kind: MediaDeviceKind;
+    onError?: (e: Error) => void;
 }): MediaDeviceInfo[];
 //# sourceMappingURL=useMediaDevices.d.ts.map

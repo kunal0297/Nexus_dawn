@@ -1,21 +1,15 @@
-import { Configuration, OpenAIApi } from 'openai';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
-const configuration = new Configuration({
-  apiKey: process.env.REACT_APP_OPENAI_API_KEY,
-});
+const genAI = new GoogleGenerativeAI(process.env.REACT_APP_GEMINI_API_KEY || '');
+const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
 
-const openai = new OpenAIApi(configuration);
-
-export async function createEmbedding(text: string): Promise<number[]> {
+export async function generateEmbedding(text: string): Promise<number[]> {
   try {
-    const response = await openai.createEmbedding({
-      model: "text-embedding-ada-002",
-      input: text,
-    });
-
-    return response.data.data[0].embedding;
+    const result = await model.embedContent(text);
+    const embedding = await result.embedding;
+    return embedding.values;
   } catch (error) {
-    console.error('Error creating embedding:', error);
+    console.error('Error generating embedding:', error);
     throw error;
   }
 }

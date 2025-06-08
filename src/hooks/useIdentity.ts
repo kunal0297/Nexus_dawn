@@ -1,80 +1,167 @@
-import { useState, useEffect } from 'react';
-import { blockchainService } from '../services/BlockchainService';
+import { useState, useCallback } from 'react';
+import { useBlockchain } from '../contexts/BlockchainContext';
+import { useSubscription } from '../contexts/SubscriptionContext';
+import { EncryptionService } from '../services/encryption';
+import { SanitizationService } from '../services/sanitization';
+import { env } from '../config/env.validation';
 
 interface IdentityState {
   isConnected: boolean;
-  balance: number;
   account: string | null;
-  identity: string | null;
+  balance: number;
+  isCreating: boolean;
+  error: string | null;
 }
 
-export const useIdentity = () => {
+export function useIdentity() {
+  const { 
+    account,
+    balance,
+    isConnected,
+    connectWallet,
+    disconnectWallet,
+    generateDID,
+    storeInteraction,
+    sendPayment
+  } = useBlockchain();
+  const { currentTier } = useSubscription();
   const [state, setState] = useState<IdentityState>({
-    isConnected: false,
-    balance: 0,
-    account: null,
-    identity: null
+    isConnected,
+    account,
+    balance,
+    isCreating: false,
+    error: null
   });
 
-  useEffect(() => {
-    // Initialize state from blockchain service
-    const serviceState = blockchainService.getState();
-    setState(prev => ({
-      ...prev,
-      ...serviceState
-    }));
-
-    // Subscribe to blockchain state changes
-    const unsubscribe = blockchainService.subscribe(({ isConnected, balance }) => {
+  const handleConnect = useCallback(async () => {
+    try {
+      setState(prev => ({ ...prev, error: null }));
+      await connectWallet();
+      
+      // Encrypt sensitive data
+      const encryptedAccount = account ? EncryptionService.encrypt(account) : null;
+      
       setState(prev => ({
         ...prev,
-        isConnected,
+        isConnected: true,
+        account: encryptedAccount,
         balance
       }));
-    });
-
-    return () => unsubscribe();
-  }, []);
-
-  const connect = async () => {
-    const success = await blockchainService.connect();
-    if (success) {
-      const identity = await blockchainService.createIdentity();
-      setState(prev => ({ ...prev, identity }));
-    }
-    return success;
-  };
-
-  const disconnect = () => {
-    blockchainService.disconnect();
-    setState(prev => ({ ...prev, identity: null }));
-  };
-
-  const saveInteraction = async (data: any) => {
-    try {
-      const txId = await blockchainService.saveInteraction(data);
-      return { success: true, txId };
     } catch (error) {
-      console.error('Failed to save interaction:', error);
-      return { success: false, error };
+      setState(prev => ({
+        ...prev,
+        error: error instanceof Error ? error.message : 'Failed to connect'
+      }));
     }
-  };
+  }, [connectWallet, account, balance]);
 
-  const sendPayment = async (recipient: string, amount: number) => {
+  const handleDisconnect = useCallback(async () => {
     try {
-      const txId = await blockchainService.transferFunds(recipient, amount);
-      return { success: true, txId };
+      disconnectWallet();
+      setState({
+        isConnected: false,
+        account: null,
+        balance: 0,
+        isCreating: false,
+        error: null
+      });
     } catch (error) {
-      console.error('Failed to send payment:', error);
-      return { success: false, error };
+      setState(prev => ({
+        ...prev,
+        error: error instanceof Error ? error.message : 'Failed to disconnect'
+      }));
     }
-  };
+  }, [disconnectWallet]);
+
+  const handleCreateIdentity = useCallback(async () => {
+    if (currentTier === 'observer') {
+      setState(prev => ({
+        ...prev,
+        error: 'Subscription required to create identity'
+      }));
+      return;
+    }
+
+    try {
+      setState(prev => ({ ...prev, isCreating: true, error: null }));
+      const did = generateDID();
+      
+      // Encrypt sensitive data
+      const encryptedDid = EncryptionService.encrypt(did);
+      
+      setState(prev => ({
+        ...prev,
+        isCreating: false,
+        account: encryptedDid
+      }));
+    } catch (error) {
+      setState(prev => ({
+        ...prev,
+        isCreating: false,
+        error: error instanceof Error ? error.message : 'Failed to create identity'
+      }));
+    }
+  }, [generateDID, currentTier]);
+
+  const handleSaveInteraction = useCallback(async (interaction: {
+    type: string;
+    data: any;
+    timestamp: number;
+  }) => {
+    if (!state.isConnected) {
+      setState(prev => ({
+        ...prev,
+        error: 'Must be connected to save interaction'
+      }));
+      return;
+    }
+
+    try {
+      // Sanitize interaction data
+      const sanitizedInteraction = {
+        ...interaction,
+        type: SanitizationService.sanitizeString(interaction.type),
+        data: SanitizationService.sanitizeObject(interaction.data)
+      };
+
+      await storeInteraction(sanitizedInteraction);
+    } catch (error) {
+      setState(prev => ({
+        ...prev,
+        error: error instanceof Error ? error.message : 'Failed to save interaction'
+      }));
+    }
+  }, [storeInteraction, state.isConnected]);
+
+  const handleSendPayment = useCallback(async (recipient: string, amount: number) => {
+    if (!state.isConnected) {
+      setState(prev => ({
+        ...prev,
+        error: 'Must be connected to send payment'
+      }));
+      return;
+    }
+
+    try {
+      // Sanitize payment data
+      const sanitizedRecipient = SanitizationService.sanitizeString(recipient);
+
+      await sendPayment(sanitizedRecipient, amount);
+      setState(prev => ({ ...prev, balance }));
+    } catch (error) {
+      setState(prev => ({
+        ...prev,
+        error: error instanceof Error ? error.message : 'Failed to send payment'
+      }));
+    }
+  }, [sendPayment, state.isConnected, balance]);
 
   return {
     ...state,
-    connect,
-    disconnect,
-    saveInteraction,
-    sendPayment
+    connect: handleConnect,
+    disconnect: handleDisconnect,
+    createIdentity: handleCreateIdentity,
+    saveInteraction: handleSaveInteraction,
+    sendPayment: handleSendPayment
   };
-}; 
+} 
