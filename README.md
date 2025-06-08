@@ -102,7 +102,7 @@ npm run dev
 | Frontend | ![React](https://img.shields.io/badge/React-18.2-blue) ![TypeScript](https://img.shields.io/badge/TypeScript-4.9-blue) ![TailwindCSS](https://img.shields.io/badge/TailwindCSS-3.3-blue) |
 | 3D | ![Three.js](https://img.shields.io/badge/Three.js-r134-blue) |
 | State | ![Zustand](https://img.shields.io/badge/Zustand-4.3-blue) |
-| AI | ![OpenAI](https://img.shields.io/badge/OpenAI-GPT4-blue) ![ElevenLabs](https://img.shields.io/badge/ElevenLabs-Voice-blue) |
+| AI | ![Gemini ](https://img.shields.io/badge/Gemini-blue) ![ElevenLabs](https://img.shields.io/badge/ElevenLabs-Voice-blue) |
 | Testing | ![Jest](https://img.shields.io/badge/Jest-29.5-blue) ![RTL](https://img.shields.io/badge/RTL-14.0-blue) |
 | Build | ![Vite](https://img.shields.io/badge/Vite-4.3-blue) ![Babel](https://img.shields.io/badge/Babel-7.22-blue) |
 
