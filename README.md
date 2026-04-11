@@ -20,7 +20,7 @@
 
 ## ✨ Overview
 
-NEXUS.DAWN is a cosmic-scale emotional intelligence platform that combines AI, quantum computing metaphors, and immersive 3D interfaces. Experience the future of emotional intelligence through our innovative platform.
+NEXUS.DAWN is a cosmic-scale emotional intelligence platform that combines AI and immersive 3D interfaces. Experience the future of emotional intelligence through our innovative platform.
 
 ## 🚀 Quick Start
 
